@@ -1,6 +1,6 @@
 {
   "name": "@antonior/codex-setup",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Install Antonio's portable Codex setup: global rules, hooks, agents, skills, permissions, status line, and defaults",
   "bin": {
     "codex-setup": "bin/install.js"

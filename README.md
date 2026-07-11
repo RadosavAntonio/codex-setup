@@ -58,7 +58,6 @@ Into `~/.codex/`:
 - **`config.toml`**: model, reasoning, approval and sandbox modes, memories, history, features, trusted projects, TUI, status line, and OpenAI developer documentation MCP
 - **`AGENTS.md`**: global engineering, verification, scope, communication, planning, and safety rules
 - **`hooks.json`** and **`hooks/`**
-  - `caveman-activate.sh`: activates concise response style
   - `scan-secrets.sh`: blocks commits containing likely secrets or real `.env` files
   - `check-dep.sh`: detects dependency additions and requests research
   - `eslint-fix.sh`: runs local ESLint fixes on edited JavaScript and TypeScript files
@@ -86,7 +85,7 @@ The setup configures the official `openaiDeveloperDocs` MCP server at `https://d
 
 This setup deliberately keeps responses and verification focused:
 
-- **Caveman mode and session hook** keep technical accuracy while removing filler and repetition.
+- **Compact global rules and Caveman mode** keep technical accuracy while removing filler and repeated startup instructions.
 - **Focused agents** use a smaller read only model for code search and reserve deeper reasoning for planning work.
 - **Scoped verification** runs ESLint and TypeScript checks against changed files.
 - **Persistent memories** reduce repeated explanation across Codex sessions.
