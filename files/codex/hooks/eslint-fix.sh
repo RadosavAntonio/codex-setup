@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# PostToolUse(Edit|Write|apply_patch): best effort eslint --fix for edited JS/TS files.
+# PostToolUse(Edit|Write|apply_patch): run eslint --fix on edited JS/TS files.
 set -uo pipefail
 
 input=$(cat)
@@ -24,12 +24,15 @@ files=$(
 
 [ -n "$files" ] || exit 0
 
-printf '%s\n' "$files" | while IFS= read -r f; do
+fail=0
+while IFS= read -r f; do
   case "$f" in
     *.ts|*.tsx|*.js|*.jsx|*.cjs|*.mjs) ;;
     *) continue ;;
   esac
   [ -f "$f" ] || continue
+
+  f=$(cd "$(dirname "$f")" 2>/dev/null && printf '%s/%s\n' "$PWD" "$(basename "$f")") || continue
 
   dir=$(dirname "$f")
   eslint=""
@@ -41,7 +44,14 @@ printf '%s\n' "$files" | while IFS= read -r f; do
     dir=$(dirname "$dir")
   done
   [ -n "$eslint" ] || continue
-  "$eslint" --fix --no-error-on-unmatched-pattern "$f" >/dev/null 2>&1 || true
-done
+  if ! "$eslint" --fix --no-error-on-unmatched-pattern "$f"; then
+    printf 'ESLint fix failed: %s\n' "$f" >&2
+    fail=1
+  fi
+done <<< "$files"
+
+if [ "$fail" -eq 1 ]; then
+  exit 2
+fi
 
 exit 0

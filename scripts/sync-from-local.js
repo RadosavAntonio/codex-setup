@@ -21,14 +21,18 @@ function ensureDir(directory) {
   fs.mkdirSync(directory, { recursive: true });
 }
 
-function stripHookTrustState(config) {
+function stripRuntimeState(config) {
   const lines = config.split('\n');
   const kept = [];
   let skipping = false;
 
   for (const line of lines) {
     const table = line.match(/^\[([^\]]+)\]$/);
-    if (table) skipping = table[1] === 'hooks.state' || table[1].startsWith('hooks.state.');
+    if (table) {
+      skipping = table[1] === 'hooks.state'
+        || table[1].startsWith('hooks.state.')
+        || table[1] === 'tui.model_availability_nux';
+    }
     if (!skipping) kept.push(line);
   }
 
@@ -37,7 +41,7 @@ function stripHookTrustState(config) {
 
 function portableText(source, relativePath) {
   let text = fs.readFileSync(source, 'utf8').replaceAll(HOME, '{{HOME}}');
-  if (relativePath === 'config.toml') text = stripHookTrustState(text);
+  if (relativePath === 'config.toml') text = stripRuntimeState(text);
   return text;
 }
 
