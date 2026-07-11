@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Stop hook: verify changed TS files with eslint and tsc where available.
+# Stop hook: verify changed JS/TS files with eslint and the full TypeScript check.
 set -uo pipefail
 
 cat >/dev/null 2>&1 || true
@@ -12,7 +12,7 @@ files=$(
     git diff --name-only --diff-filter=ACM 2>/dev/null
     git diff --cached --name-only --diff-filter=ACM 2>/dev/null
     git ls-files --others --exclude-standard 2>/dev/null
-  } | grep -Ei '\.(ts|tsx)$' | sort -u
+  } | grep -Ei '\.(cjs|js|jsx|mjs|ts|tsx)$' | sort -u
 )
 [ -n "$files" ] || exit 0
 
@@ -30,14 +30,9 @@ if [ -x "$eslint" ]; then
 fi
 
 if [ -x "$tsc" ]; then
-  tmsg=$("$tsc" --noEmit 2>&1) || true
-  pat=$(printf '%s\n' "$files" | sed 's/[.]/\\./g' | paste -sd'|' -)
-  if [ -n "$pat" ]; then
-    myerr=$(printf '%s\n' "$tmsg" | grep -E "($pat)\(" || true)
-    if [ -n "$myerr" ]; then
-      fail=1
-      out="${out}tsc --noEmit (your files):\n${myerr}\n"
-    fi
+  if ! tmsg=$("$tsc" --noEmit 2>&1); then
+    fail=1
+    out="${out}tsc --noEmit:\n${tmsg}\n"
   fi
 fi
 
