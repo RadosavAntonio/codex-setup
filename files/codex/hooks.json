@@ -1,0 +1,76 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "{{HOME}}/.codex/hooks/caveman-activate.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "{{HOME}}/.codex/hooks/scan-secrets.sh",
+            "timeout": 15,
+            "statusMessage": "Scanning staged changes for secrets"
+          },
+          {
+            "type": "command",
+            "command": "{{HOME}}/.codex/hooks/check-dep.sh",
+            "timeout": 10,
+            "statusMessage": "Checking dependency additions"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|apply_patch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "{{HOME}}/.codex/hooks/eslint-fix.sh",
+            "timeout": 30,
+            "statusMessage": "Running eslint --fix on edited JS/TS files"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "{{HOME}}/.codex/hooks/video-fps-reminder.py",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "{{HOME}}/.codex/hooks/notify-sound.sh /System/Library/Sounds/Glass.aiff",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "{{HOME}}/.codex/hooks/stop-verify.sh",
+            "timeout": 180,
+            "statusMessage": "Verifying changed files (lint + types)"
+          }
+        ]
+      }
+    ]
+  }
+}
