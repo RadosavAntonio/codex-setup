@@ -17,6 +17,7 @@ Stock Codex is powerful but neutral. This configuration turns it into a careful,
 - **🧠 Remembers across sessions.** Codex memories and saved history preserve useful decisions and preferences without shipping private history in this package.
 - **💸 Uses fewer tokens.** Caveman mode removes filler while retaining technical substance. Verification hooks target changed files rather than whole repositories.
 - **🧭 Uses focused agents.** `explorer` handles fast read only code search, `plan` handles architecture and implementation planning, `advisor` reviews difficult technical decisions, and `statusline-setup` makes targeted footer changes.
+- **📱 Drives simulators and emulators.** `XcodeBuildMCP` builds, tests, and debugs against the iOS/macOS Simulator; the Android MCP server controls emulators and real devices through `adb`. `claude-video-vision` lets Codex watch and reason about video, and `context7` fetches current third party library documentation instead of relying on training data.
 - **📊 Shows useful session state.** Status line shows directory, branch, model and reasoning, context use, token totals, and five hour and weekly limits.
 - **⚡ Reproducible portable mirror.** Installer renders target home paths, backs up replaced files, leaves unmanaged files untouched, and remains safe to rerun.
 
@@ -83,25 +84,26 @@ Legacy copies of the six package managed skills under `~/.agents/skills/` are mo
 
 ## Configured MCP servers
 
-| Server | Delivery | Capability |
-|--------|----------|------------|
-| `transcript-search` | Bundled Python standard library server | Searches your local Claude Code prompts and replies. Transcript files and its generated SQLite index remain local and are never packaged. |
-| `claude-video-vision` | `npx`, pinned to `1.3.2` | Video and audio analysis. |
-| `context7` | `npx`, pinned to `4.0.2` | Current third party developer documentation. |
-| `XcodeBuildMCP` | `npx`, currently resolves to `2.7.0` | Xcode builds, simulators, debugging, and UI automation. |
-| `android` | Local source command | Android screenshots, UI inspection, interaction, logs, and app control through `adb`. |
+Auto-registered in `config.toml` on install:
 
-The Android server is not bundled. To match the configured path:
+- **`transcript-search`** — full-text search over your *own* past **Claude Code** transcripts ("we talked about…", "like last time"), reachable from inside a Codex session. Pure Python standard library, no daemons or embeddings. The index is built **locally on your machine** from `~/.claude/projects/**/*.jsonl` on first use — nothing about your conversations is ever shipped in this package. If you don't also use Claude Code, this server has nothing to index and stays effectively idle.
+- **`claude-video-vision`** — lets Codex watch and reason about video (frame extraction plus audio transcription). Published as [`claude-video-vision`](https://www.npmjs.com/package/claude-video-vision) on npm (pinned to `1.3.2`); run via `npx`. Needs its own API key on first use — see [On a new machine](#on-a-new-machine).
+  - **Tip:** when asked for FPS, answer **0** for audio-transcription-only analysis — far cheaper on tokens than extracting frames. Only raise it when you need on-screen visual detail. The bundled `video-fps-reminder.py` hook prompts for this whenever it's missing from your request.
+- **`context7`** — current, version-pinned third-party library and framework documentation, fetched live instead of relying on training data. Published as [`@upstash/context7-mcp`](https://github.com/upstash/context7#readme) on npm (pinned to `4.0.2`); run via `npx`.
+- **`XcodeBuildMCP`** — build, test, drive the iOS/macOS **Simulator**, and debug from Codex without opening Xcode's UI. Published as [`xcodebuildmcp`](https://www.xcodebuildmcp.com) on npm (tracks `latest`, currently resolves to `2.7.0`); run via `npx`. Needs Xcode and its command line tools installed.
+- **`android`** — controls Android **emulators** and physical devices via `adb`: screenshots, UI inspection, tap/swipe/type, logs, and app install/launch. Not npm-published, so it isn't auto-installed; clone and build it once, then it launches from the local path already wired into `config.toml`:
+  ```sh
+  mkdir -p ~/mcp-servers
+  git clone https://github.com/martingeidobler/android-mcp-server.git ~/mcp-servers/android-mcp-server
+  cd ~/mcp-servers/android-mcp-server
+  npm install
+  npm run build
+  ```
+  Requires the Android SDK and `adb` on `PATH`. Verify registration with `codex mcp list`.
 
-```sh
-mkdir -p ~/mcp-servers
-git clone https://github.com/martingeidobler/android-mcp-server.git ~/mcp-servers/android-mcp-server
-cd ~/mcp-servers/android-mcp-server
-npm install
-npm run build
-```
+  Security note: as checked on 19 August 2026, `android-mcp-server@1.3.0` depends on `sharp <0.35.0`; `npm audit --omit=dev` reports the high severity [GHSA-f88m-g3jw-g9cj](https://github.com/advisories/GHSA-f88m-g3jw-g9cj) advisory. Android setup therefore remains manual instead of being installed automatically. Review the upstream package before installation.
 
-Security note: as checked on 19 August 2026, `android-mcp-server@1.3.0` depends on `sharp <0.35.0`; `npm audit --omit=dev` reports the high severity [GHSA-f88m-g3jw-g9cj](https://github.com/advisories/GHSA-f88m-g3jw-g9cj) advisory. Android setup therefore remains manual instead of being installed automatically. Review the upstream package before installation.
+Register any additional MCP server yourself with `codex mcp add <name> -- <command>` (or `--url` for a streamable HTTP server); see `codex mcp --help`.
 
 ## Optimised for low token usage
 
@@ -119,8 +121,9 @@ Configuration is portable, but identity and machine trust are not. Complete thes
 
 1. Install and sign in to Codex.
 2. Run `npx @antonior/codex-setup`.
-3. Optionally build the Android MCP server using the audited manual steps above.
-4. Restart Codex and approve installed hooks.
+3. Give `claude-video-vision` its own API key if you use video analysis.
+4. Optionally build the Android MCP server using the audited manual steps above, and install Xcode with its command line tools if you use `XcodeBuildMCP`.
+5. Restart Codex and approve installed hooks.
 
 Hook trust hashes are deliberately excluded because trust decisions belong to each machine.
 
