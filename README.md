@@ -5,7 +5,7 @@
 [![platform](https://img.shields.io/badge/platform-macOS-black?logo=apple&logoColor=white)](#platforms)
 [![tokens](https://img.shields.io/badge/optimised%20for-low%20token%20usage-brightgreen)](#optimised-for-low-token-usage)
 
-One command installer for my [OpenAI Codex](https://openai.com/codex/) configuration: global rules, hooks, agents, skills, permissions, memories, model defaults, and status line. Install once to get the portable setup I use every day. **Optimised for low token usage.**
+One command installer for my [OpenAI Codex](https://openai.com/codex/) configuration: global rules, hooks, agents, skills, permissions, memories, MCP tools, model defaults, and status line. Install once to get the portable setup I use every day. **Optimised for low token usage.**
 
 ## Why this setup?
 
@@ -16,7 +16,7 @@ Stock Codex is powerful but neutral. This configuration turns it into a careful,
 - **🎯 Stays in scope.** Codex changes only what was requested or clearly required. Unrelated improvements are reported, not silently bundled.
 - **🧠 Remembers across sessions.** Codex memories and saved history preserve useful decisions and preferences without shipping private history in this package.
 - **💸 Uses fewer tokens.** Caveman mode removes filler while retaining technical substance. Verification hooks target changed files rather than whole repositories.
-- **🧭 Uses focused agents.** `Explore` handles fast read only code search, `Plan` handles architecture and implementation planning, and `statusline-setup` makes targeted footer changes.
+- **🧭 Uses focused agents.** `explorer` handles fast read only code search, `plan` handles architecture and implementation planning, `advisor` reviews difficult technical decisions, and `statusline-setup` makes targeted footer changes.
 - **📊 Shows useful session state.** Status line shows directory, branch, model and reasoning, context use, token totals, and five hour and weekly limits.
 - **⚡ Reproducible portable mirror.** Installer renders target home paths, backs up replaced files, leaves unmanaged files untouched, and remains safe to rerun.
 
@@ -47,15 +47,17 @@ Installer checks dependencies but does not install software automatically.
 | Codex CLI | Running configuration | Required |
 | Node.js 18+ | Running installer | Required |
 | `jq` | Hook command payload inspection | Optional; related hooks remain inactive without it |
-| Python 3 | Video FPS reminder hook | Optional |
+| Python 3 | Local transcript search and video FPS reminder | Required for transcript search; video reminder remains inactive without it |
 | `git` | Commit scanning and changed file verification | Optional |
 | `eslint`, `tsc` | Automatic linting and TypeScript verification | Optional; hooks no op when unavailable |
+| Xcode | Apple builds, simulators, and UI automation | Required for `XcodeBuildMCP` |
+| Android SDK and `adb` | Android device and emulator control | Required only for the manually installed Android MCP server |
 
 ## What it installs
 
 Into `~/.codex/`:
 
-- **`config.toml`**: model, reasoning, approval and sandbox modes, memories, history, features, trusted projects, TUI, status line, and OpenAI developer documentation MCP
+- **`config.toml`**: model, reasoning, approval and permission defaults, memories, features, TUI, status line, and MCP servers
 - **`AGENTS.md`**: global engineering, verification, scope, communication, planning, and safety rules
 - **`hooks.json`** and **`hooks/`**
   - `scan-secrets.sh`: blocks commits containing likely secrets or real `.env` files
@@ -64,10 +66,11 @@ Into `~/.codex/`:
   - `stop-verify.sh`: checks changed TypeScript files with ESLint and `tsc`
   - `video-fps-reminder.py`: requests FPS before video analysis when missing
   - `notify-sound.sh`: plays completion sound unless muted
-- **`agents/`**: `Explore`, `Plan`, and `statusline-setup`
+- **`agents/`**: `advisor`, `explorer`, `plan`, and `statusline-setup`
 - **`rules/default.rules`**: reusable development command permissions
+- **`transcript-search/`**: local Python MCP server for searching your own Claude Code conversation history
 
-Into `~/.agents/skills/`:
+Into `~/.codex/skills/`:
 
 - **`caveman`**: concise communication with technical substance preserved
 - **`check-dep`**: dependency size, maintenance, compatibility, and alternative research
@@ -76,10 +79,29 @@ Into `~/.agents/skills/`:
 - **`scan-secrets`**: staged secret and PII inspection before commits
 
 Changed managed files are backed up to `<file>.bak`. Unmanaged files and directories are never deleted.
+Legacy copies of the six package managed skills under `~/.agents/skills/` are moved recoverably to `<skill>.legacy.bak` after the current copies install under `~/.codex/skills/`. Other `.agents` content remains untouched.
 
-## Configured MCP server
+## Configured MCP servers
 
-The setup configures the official `openaiDeveloperDocs` MCP server at `https://developers.openai.com/mcp`. It provides current OpenAI developer documentation without connecting Codex to Claude or another private assistant history.
+| Server | Delivery | Capability |
+|--------|----------|------------|
+| `transcript-search` | Bundled Python standard library server | Searches your local Claude Code prompts and replies. Transcript files and its generated SQLite index remain local and are never packaged. |
+| `claude-video-vision` | `npx`, pinned to `1.3.2` | Video and audio analysis. |
+| `context7` | `npx`, pinned to `4.0.2` | Current third party developer documentation. |
+| `XcodeBuildMCP` | `npx`, currently resolves to `2.7.0` | Xcode builds, simulators, debugging, and UI automation. |
+| `android` | Local source command | Android screenshots, UI inspection, interaction, logs, and app control through `adb`. |
+
+The Android server is not bundled. To match the configured path:
+
+```sh
+mkdir -p ~/mcp-servers
+git clone https://github.com/martingeidobler/android-mcp-server.git ~/mcp-servers/android-mcp-server
+cd ~/mcp-servers/android-mcp-server
+npm install
+npm run build
+```
+
+Security note: as checked on 19 August 2026, `android-mcp-server@1.3.0` depends on `sharp <0.35.0`; `npm audit --omit=dev` reports the high severity [GHSA-f88m-g3jw-g9cj](https://github.com/advisories/GHSA-f88m-g3jw-g9cj) advisory. Android setup therefore remains manual instead of being installed automatically. Review the upstream package before installation.
 
 ## Optimised for low token usage
 
@@ -97,7 +119,8 @@ Configuration is portable, but identity and machine trust are not. Complete thes
 
 1. Install and sign in to Codex.
 2. Run `npx @antonior/codex-setup`.
-3. Restart Codex and approve installed hooks.
+3. Optionally build the Android MCP server using the audited manual steps above.
+4. Restart Codex and approve installed hooks.
 
 Hook trust hashes are deliberately excluded because trust decisions belong to each machine.
 
@@ -113,10 +136,11 @@ This package ships configuration and reusable tools only. It never ships:
 - Installation identifiers
 - Plugin caches or downloaded system skills
 - Hook trust decisions
+- Trusted project paths
 
 Home directory paths become `{{HOME}}` inside package and are rendered for target machine during installation.
 
-The installed configuration currently uses `danger-full-access`, approval policy `never`, saved history, generated memories, and trusted project paths. Review [`files/codex/config.toml`](./files/codex/config.toml) before installation if those defaults do not suit you.
+The installed configuration currently uses workspace permissions, approval policy `on-request`, automatic approval review, generated memories, and several opt in Codex capabilities. Review [`files/codex/config.toml`](./files/codex/config.toml) before installation if those defaults do not suit you.
 
 ## Maintaining
 
@@ -145,7 +169,7 @@ git add -A
 ./scripts/scan-staged.sh
 ```
 
-`scripts/sync-from-local.js` never copies credentials, histories, memories, runtime databases, sessions, caches, or hook trust state.
+`scripts/sync-from-local.js` never copies credentials, histories, memories, runtime databases, sessions, caches, hook trust state, or trusted project paths.
 
 ## Publishing
 

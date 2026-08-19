@@ -1,33 +1,75 @@
 {
   "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "{{HOME}}/.codex/hooks/caveman-activate.sh",
+            "timeout": 5,
+            "additionalContextLimit": 3000
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Bash",
         "hooks": [
           {
             "type": "command",
+            "command": "{{HOME}}/.codex/hooks/destructive-git-guard.sh",
+            "timeout": 5
+          },
+          {
+            "type": "command",
             "command": "{{HOME}}/.codex/hooks/scan-secrets.sh",
+            "if": "Bash(git commit*)",
             "timeout": 15,
             "statusMessage": "Scanning staged changes for secrets"
           },
           {
             "type": "command",
             "command": "{{HOME}}/.codex/hooks/check-dep.sh",
-            "timeout": 10,
-            "statusMessage": "Checking dependency additions"
+            "if": "Bash(yarn add*)",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "{{HOME}}/.codex/hooks/check-dep.sh",
+            "if": "Bash(npm install *)",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "{{HOME}}/.codex/hooks/check-dep.sh",
+            "if": "Bash(npm i *)",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "{{HOME}}/.codex/hooks/check-dep.sh",
+            "if": "Bash(npm add*)",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "{{HOME}}/.codex/hooks/check-dep.sh",
+            "if": "Bash(pnpm add*)",
+            "timeout": 10
           }
         ]
       }
     ],
     "PostToolUse": [
       {
-        "matcher": "Edit|Write|apply_patch",
+        "matcher": "Edit|Write",
         "hooks": [
           {
             "type": "command",
             "command": "{{HOME}}/.codex/hooks/eslint-fix.sh",
-            "timeout": 30,
-            "statusMessage": "Running eslint --fix on edited JS/TS files"
+            "timeout": 30
           }
         ]
       }
@@ -38,7 +80,8 @@
           {
             "type": "command",
             "command": "{{HOME}}/.codex/hooks/video-fps-reminder.py",
-            "timeout": 5
+            "timeout": 5,
+            "additionalContextLimit": 500
           }
         ]
       }
@@ -48,14 +91,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "{{HOME}}/.codex/hooks/notify-sound.sh /System/Library/Sounds/Glass.aiff",
-            "timeout": 5
-          },
-          {
-            "type": "command",
             "command": "{{HOME}}/.codex/hooks/stop-verify.sh",
             "timeout": 180,
-            "statusMessage": "Verifying changed files (lint + types)"
+            "statusMessage": "Verifying changed files (lint + types)",
+            "async": true,
+            "asyncRewake": true,
+            "rewakeSummary": "Verification failed"
           }
         ]
       }

@@ -1,0 +1,4 @@
+interface:
+  display_name: "scan-secrets"
+  short_description: "Migrated Claude capability: scan-secrets"
+  default_prompt: "Use $scan-secrets for this task."

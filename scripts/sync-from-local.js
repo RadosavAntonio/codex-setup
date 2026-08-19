@@ -13,7 +13,7 @@ const TEMP_OUTPUT = path.join(os.tmpdir(), `codex-setup-sync-${process.pid}`);
 const TARGET = CHECK ? TEMP_OUTPUT : OUTPUT;
 
 const codexFiles = ['config.toml', 'AGENTS.md', 'hooks.json'];
-const codexDirectories = ['hooks', 'rules', 'agents'];
+const codexDirectories = ['hooks', 'rules', 'agents', 'transcript-search'];
 const personalSkills = ['caveman', 'check-dep', 'debug', 'mute', 'scan-secrets', 'unmute'];
 const ignoredNames = new Set(['__pycache__', '.DS_Store']);
 
@@ -31,7 +31,9 @@ function stripRuntimeState(config) {
     if (table) {
       skipping = table[1] === 'hooks.state'
         || table[1].startsWith('hooks.state.')
-        || table[1] === 'tui.model_availability_nux';
+        || table[1] === 'tui.model_availability_nux'
+        || table[1] === 'projects'
+        || table[1].startsWith('projects.');
     }
     if (!skipping) kept.push(line);
   }
@@ -85,7 +87,7 @@ function build(target) {
   }
 
   for (const skill of personalSkills) {
-    const source = path.join(HOME, '.agents', 'skills', skill);
+    const source = path.join(HOME, '.codex', 'skills', skill);
     if (!fs.existsSync(source)) throw new Error(`Missing personal skill: ${skill}`);
     copyDirectory(source, path.join(target, 'agent-skills', skill), path.join('agent-skills', skill));
   }

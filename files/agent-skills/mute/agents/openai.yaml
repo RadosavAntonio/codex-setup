@@ -1,0 +1,4 @@
+interface:
+  display_name: "mute"
+  short_description: "Migrated Claude capability: mute"
+  default_prompt: "Use $mute for this task."

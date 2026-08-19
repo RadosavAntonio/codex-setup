@@ -1,0 +1,4 @@
+interface:
+  display_name: "check-dep"
+  short_description: "Migrated Claude capability: check-dep"
+  default_prompt: "Use $check-dep for this task."

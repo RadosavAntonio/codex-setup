@@ -1,23 +1,21 @@
 #!/usr/bin/env bash
-# PreToolUse(Bash) hook: ask for dependency research before adding packages.
 set -uo pipefail
-
 input=$(cat)
-cmd=$(printf '%s' "$input" | {{HOME}}/.codex/hooks/_extract_command.sh 2>/dev/null || true)
+cmd=$(printf '%s' "$input" | jq -r '.tool_input.command // ""' 2>/dev/null)
 
-has_pkg() {
-  local s="$1" rest tok
-  case "$s" in
-    *"yarn add "*)     rest="${s#*yarn add }" ;;
-    *"pnpm add "*)     rest="${s#*pnpm add }" ;;
-    *"npm install "*)  rest="${s#*npm install }" ;;
-    *"npm i "*)        rest="${s#*npm i }" ;;
-    *"npm add "*)      rest="${s#*npm add }" ;;
+has_package_argument() {
+  local command="$1" remainder token
+  case "$command" in
+    *"yarn add "*) remainder="${command#*yarn add }" ;;
+    *"pnpm add "*) remainder="${command#*pnpm add }" ;;
+    *"npm install "*) remainder="${command#*npm install }" ;;
+    *"npm i "*) remainder="${command#*npm i }" ;;
+    *"npm add "*) remainder="${command#*npm add }" ;;
     *) return 1 ;;
   esac
 
-  for tok in $rest; do
-    case "$tok" in
+  for token in $remainder; do
+    case "$token" in
       "&&"|";"|"|") break ;;
       -*) ;;
       *) return 0 ;;
@@ -26,10 +24,6 @@ has_pkg() {
   return 1
 }
 
-if has_pkg "$cmd"; then
-  cat <<'JSON'
-{"hookSpecificOutput":{"hookEventName":"PreToolUse","additionalContext":"Dependency addition detected. Run $check-dep first: check bundle size, maintenance, React Native native linking, compatibility, and lighter alternatives before approving."}}
-JSON
+if has_package_argument "$cmd"; then
+  printf '%s\n' '{"hookSpecificOutput":{"hookEventName":"PreToolUse","additionalContext":"A new dependency is being added. Use the check-dep skill first, assess maintenance, size, native linking, security, and alternatives, then obtain user approval before installation."}}'
 fi
-
-exit 0
