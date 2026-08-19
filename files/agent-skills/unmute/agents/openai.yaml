@@ -1,0 +1,4 @@
+interface:
+  display_name: "unmute"
+  short_description: "Migrated Claude capability: unmute"
+  default_prompt: "Use $unmute for this task."

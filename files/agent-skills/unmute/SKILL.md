@@ -1,7 +1,6 @@
 ---
 name: unmute
-description: Re-enable Codex sound notifications.
+description: Re-enable Codex sound notifications after mute.
 ---
 
-Run `rm -f /tmp/codex-nosound` via Bash.
-Reply exactly: `Sound on.`
+Run `rm -f /tmp/codex-nosound`. Reply exactly: `Sound on.`

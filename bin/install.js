@@ -8,9 +8,11 @@ const { spawnSync } = require('child_process');
 
 const HOME = os.homedir();
 const CODEX_DIR = path.join(HOME, '.codex');
-const AGENTS_SKILLS_DIR = path.join(HOME, '.agents', 'skills');
+const CODEX_SKILLS_DIR = path.join(CODEX_DIR, 'skills');
+const LEGACY_SKILLS_DIR = path.join(HOME, '.agents', 'skills');
 const FILES_DIR = path.join(__dirname, '..', 'files');
 const CONFIG_ONLY = process.argv.includes('--config-only');
+const PERSONAL_SKILLS = ['caveman', 'check-dep', 'debug', 'mute', 'scan-secrets', 'unmute'];
 
 const colour = {
   green: (value) => `\x1b[32m${value}\x1b[0m`,
@@ -94,6 +96,26 @@ function installTree(sourceRoot, destinationRoot) {
   }
 }
 
+function backupLegacySkills() {
+  for (const skill of PERSONAL_SKILLS) {
+    const legacy = path.join(LEGACY_SKILLS_DIR, skill);
+    if (!fs.existsSync(legacy)) continue;
+
+    const backup = `${legacy}.legacy.bak`;
+    if (fs.existsSync(backup)) {
+      warn(`Legacy skill remains because backup already exists: ${legacy}`);
+      continue;
+    }
+
+    try {
+      fs.renameSync(legacy, backup);
+      ok(`Backed up legacy skill: ${legacy} -> ${backup}`);
+    } catch (error) {
+      warn(`Could not back up legacy skill ${legacy}: ${error.message}`);
+    }
+  }
+}
+
 function checkRequirements() {
   if (!commandExists('codex')) {
     fail('Codex CLI not found. Install Codex before using this configuration.');
@@ -105,7 +127,20 @@ function checkRequirements() {
   else warn('jq missing. Command inspection hooks will remain inactive until jq is installed.');
 
   if (commandExists('python3')) ok('python3 present');
-  else warn('python3 missing. Video FPS reminder hook will remain inactive.');
+  else warn('python3 missing. Transcript search and video FPS reminder will remain inactive.');
+
+  if (commandExists('git')) ok('git present');
+  else warn('git missing. Commit scanning and changed file verification will remain inactive.');
+
+  if (commandExists('xcodebuild')) ok('Xcode present');
+  else warn('Xcode missing. XcodeBuildMCP tools will be unavailable.');
+
+  if (commandExists('adb')) ok('adb present');
+  else warn('adb missing. Android MCP tools will be unavailable.');
+
+  const androidServer = path.join(HOME, 'mcp-servers', 'android-mcp-server', 'dist', 'index.js');
+  if (fs.existsSync(androidServer)) ok('Android MCP server present');
+  else warn('Android MCP server missing. Follow the audited manual setup in the README before using it.');
 }
 
 function main() {
@@ -121,8 +156,9 @@ function main() {
   installTree(path.join(FILES_DIR, 'codex'), CODEX_DIR);
 
   console.log(colour.bold('\nPersonal skills:'));
-  ensureDir(AGENTS_SKILLS_DIR);
-  installTree(path.join(FILES_DIR, 'agent-skills'), AGENTS_SKILLS_DIR);
+  ensureDir(CODEX_SKILLS_DIR);
+  installTree(path.join(FILES_DIR, 'agent-skills'), CODEX_SKILLS_DIR);
+  backupLegacySkills();
 
   console.log(colour.bold(colour.green('\nDone. Restart Codex to apply.')));
   console.log(colour.dim('Changed managed files were backed up to <file>.bak. Unmanaged files were not deleted.'));

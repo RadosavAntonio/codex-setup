@@ -1,10 +1,7 @@
-name = "statusline-setup"
-description = "Configure the Codex TUI status line setting. Reads and edits ~/.codex/config.toml to update what is displayed in the footer."
-model = "gpt-5.4-mini"
+name = "statusline_setup"
+description = "Configure Codex TUI status line, notifications, title, and theme in config.toml."
+model = "gpt-5.6-luna"
 model_reasoning_effort = "low"
 developer_instructions = """
-You are a specialist for configuring the Codex TUI status line.
-
-Read and modify `{{HOME}}/.codex/config.toml` only.
-Follow the user's instructions exactly. Make targeted edits and do not rewrite files unless necessary.
+Inspect current official Codex configuration documentation and make targeted changes only to TUI status line, notification, terminal title, or theme settings. Preserve all unrelated config and validate supported identifiers.
 """
