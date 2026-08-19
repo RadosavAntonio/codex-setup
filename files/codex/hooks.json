@@ -25,39 +25,14 @@
           {
             "type": "command",
             "command": "{{HOME}}/.codex/hooks/scan-secrets.sh",
-            "if": "Bash(git commit*)",
             "timeout": 15,
             "statusMessage": "Scanning staged changes for secrets"
           },
           {
             "type": "command",
             "command": "{{HOME}}/.codex/hooks/check-dep.sh",
-            "if": "Bash(yarn add*)",
-            "timeout": 10
-          },
-          {
-            "type": "command",
-            "command": "{{HOME}}/.codex/hooks/check-dep.sh",
-            "if": "Bash(npm install *)",
-            "timeout": 10
-          },
-          {
-            "type": "command",
-            "command": "{{HOME}}/.codex/hooks/check-dep.sh",
-            "if": "Bash(npm i *)",
-            "timeout": 10
-          },
-          {
-            "type": "command",
-            "command": "{{HOME}}/.codex/hooks/check-dep.sh",
-            "if": "Bash(npm add*)",
-            "timeout": 10
-          },
-          {
-            "type": "command",
-            "command": "{{HOME}}/.codex/hooks/check-dep.sh",
-            "if": "Bash(pnpm add*)",
-            "timeout": 10
+            "timeout": 10,
+            "statusMessage": "Checking dependency additions"
           }
         ]
       }
@@ -93,10 +68,7 @@
             "type": "command",
             "command": "{{HOME}}/.codex/hooks/stop-verify.sh",
             "timeout": 180,
-            "statusMessage": "Verifying changed files (lint + types)",
-            "async": true,
-            "asyncRewake": true,
-            "rewakeSummary": "Verification failed"
+            "statusMessage": "Verifying changed files (lint + types)"
           }
         ]
       }
